@@ -6,6 +6,12 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity"
     >
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        app:popupTheme="@style/Theme.AppCompat" />
 
     <ImageView
         android:id="@+id/imageView2"
@@ -21,12 +27,16 @@
 
     <Button
         android:id="@+id/button"
-        android:layout_width="236dp"
-        android:layout_height="89dp"
+        android:layout_width="299dp"
+        android:layout_height="77dp"
         android:layout_marginStart="86dp"
         android:layout_marginEnd="89dp"
+        android:background="@drawable/rounded_button"
         android:backgroundTint="#DE0E1C"
         android:fontFamily="sans-serif"
+        android:gravity="center"
+        android:paddingLeft="34dp"
+        android:text="Escanear"
         android:textAlignment="center"
         android:textSize="25sp"
         android:textStyle="bold"
@@ -39,7 +49,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imageView2"
         app:rippleColor="@color/app_icon_background"
-        app:strokeColor="#FFFFFF"
-        android:text="Escanear" />
+        app:strokeColor="#FFFFFF" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

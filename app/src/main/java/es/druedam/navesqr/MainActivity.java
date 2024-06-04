@@ -3,9 +3,11 @@ package es.druedam.navesqr;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -15,12 +17,7 @@ import android.widget.Toast;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
-import java.sql.Timestamp;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.Date;
 
 import es.druedam.navesqr.databinding.ActivityMainBinding;
@@ -40,6 +37,12 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setIcon(R.mipmap.app_icon_foreground);
+        getSupportActionBar().setTitle("Naves Escaner QR");
+        toolbar.setTitleTextColor(Color.parseColor("#ffffff"));
 
         apiService = ApiClient.getClient().create(ApiService.class);
 
@@ -76,7 +79,7 @@ public class MainActivity extends AppCompatActivity
                 Date cDate = new Date();
                 String fDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX").format(cDate);
                 infoMensaje = result.getContents().split("&");
-                updateCodigoValidado(result.getContents(), new CodigoModel(0,infoMensaje[0], result.getContents(), true, true, fDate));
+                getCodigoValidado(result.getContents(), new CodigoModel(0,infoMensaje[0], result.getContents(), true, true, fDate));
                 Toast.makeText(this, "El valor escaneado es: " + result.getContents() , Toast.LENGTH_LONG);
                 Log.i("NAVESQR", "el valor escaneado es:" + result.getContents());
             }
@@ -85,7 +88,6 @@ public class MainActivity extends AppCompatActivity
         {
             super.onActivityResult(requestCode, resultCode, data);
         }
-
     }
 
 
@@ -103,7 +105,39 @@ public class MainActivity extends AppCompatActivity
         alertDialog.show();
 
     }
-    private void updateCodigoValidado(String codigo, CodigoModel codigoModel)
+    private void getCodigoValidado(String codigo, CodigoModel codigoModel)
+    {
+        Call<Boolean> callBool = apiService.getValidacionCodigo(codigo);
+        callBool.enqueue(new Callback<Boolean>() {
+            @Override
+            public void onResponse(Call<Boolean> call, Response<Boolean> response) {
+               if(response.isSuccessful())
+               {
+                   if(!response.body())
+                   {
+                       updateCodigo(codigo, codigoModel);
+                   }
+                   else
+                   {
+                       showDialog("Esta invitacion ya HA SIDO USADA!!!" +
+                               "\nInvitacion del alumno: " + infoMensaje[1]);
+                   }
+               }
+               else
+               {
+                   showDialog("La invitación no existe o no se encuentra registrada en la base de datos");
+               }
+            }
+
+            @Override
+            public void onFailure(Call<Boolean> call, Throwable t)
+            {
+                showDialog("Fallo al llamar a la API " + t.getMessage());
+            }
+        });
+    }
+
+    private void updateCodigo(String codigo, CodigoModel codigoModel)
     {
         Call<CodigoModel> call = apiService.updateCodigo(codigo, codigoModel);
 
@@ -127,8 +161,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onFailure(Call<CodigoModel> call, Throwable t)
             {
-                Log.e("APINAVES", "");
-                Log.e("APINAVES", "FALLO AL LLAMAR LA API " + t.getMessage());
+                showDialog("Fallo al llamar a la API " + t.getMessage());
             }
         });
     }
