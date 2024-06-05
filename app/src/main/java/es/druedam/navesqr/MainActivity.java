@@ -1,16 +1,19 @@
 package es.druedam.navesqr;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import android.content.DialogInterface;
+import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -30,6 +33,7 @@ public class MainActivity extends AppCompatActivity
     private ActivityMainBinding binding;
     private ApiService apiService;
     private String[] infoMensaje = null;
+    private Dialog dialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -58,8 +62,6 @@ public class MainActivity extends AppCompatActivity
                 integrator.initiateScan();
             }
         });
-
-
     }
 
     @Override
@@ -71,8 +73,7 @@ public class MainActivity extends AppCompatActivity
         {
             if(result.getContents() == null)
             {
-                showDialog("Se ha cancelado la lectura de invitación");
-                Toast.makeText(this, "Cancelado",Toast.LENGTH_LONG);
+                openDialog("Se ha cancelado la lectura de invitación", false);
             }
             else
             {
@@ -80,7 +81,7 @@ public class MainActivity extends AppCompatActivity
                 String fDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX").format(cDate);
                 infoMensaje = result.getContents().split("&");
                 getCodigoValidado(result.getContents(), new CodigoModel(0,infoMensaje[0], result.getContents(), true, true, fDate));
-                Toast.makeText(this, "El valor escaneado es: " + result.getContents() , Toast.LENGTH_LONG);
+                Toast.makeText(this, "Enviando...", Toast.LENGTH_LONG).show();
                 Log.i("NAVESQR", "el valor escaneado es:" + result.getContents());
             }
         }
@@ -90,21 +91,34 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-
-    private void showDialog(String message)
+    private void openDialog(String message, boolean messageState)
     {
-        AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this)
-                .setTitle("Codigo verificado")
-                .setMessage(message)
-                .setPositiveButton("Vale", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                }).create();
-        alertDialog.show();
+        dialog = new Dialog(this);
+        dialog.setContentView(R.layout.custom_dialog);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        Button btnOk = dialog.findViewById(R.id.btnAceptar);
+        TextView textTitle = dialog.findViewById(R.id.textTitle);
+        ImageView imageView = dialog.findViewById(R.id.imageDialog);
 
+        if(messageState)
+        {
+            textTitle.setText("ADELANTE");
+            imageView.setImageDrawable(getResources().getDrawable(R.drawable.checkimage));
+            TextView textMessage = dialog.findViewById(R.id.textInfo);
+            textMessage.setText(message);
+        }
+        else
+        {
+            textTitle.setText("ERROR");
+            imageView.setImageDrawable(getResources().getDrawable(R.drawable.crossimage));
+            TextView textMessage = dialog.findViewById(R.id.textInfo);
+            textMessage.setText(message);
+        }
+
+        btnOk.setOnClickListener(view -> dialog.dismiss());
+        dialog.show();
     }
+
     private void getCodigoValidado(String codigo, CodigoModel codigoModel)
     {
         Call<Boolean> callBool = apiService.getValidacionCodigo(codigo);
@@ -119,20 +133,19 @@ public class MainActivity extends AppCompatActivity
                    }
                    else
                    {
-                       showDialog("Esta invitacion ya HA SIDO USADA!!!" +
-                               "\nInvitacion del alumno: " + infoMensaje[1]);
+                       openDialog("Invitacion del alumno: " + infoMensaje[1], false);
                    }
                }
                else
                {
-                   showDialog("La invitación no existe o no se encuentra registrada en la base de datos");
+                   openDialog("La invitación no existe o no se encuentra registrada en la base de datos", true);
                }
             }
 
             @Override
             public void onFailure(Call<Boolean> call, Throwable t)
             {
-                showDialog("Fallo al llamar a la API " + t.getMessage());
+                openDialog("Fallo al llamar a la API " + t.getMessage(), false);
             }
         });
     }
@@ -147,13 +160,12 @@ public class MainActivity extends AppCompatActivity
             {
                 if(response.isSuccessful())
                 {
-                    showDialog("Invitado de: " + infoMensaje[1] +
-                            "\nLa invitación es válida");
+                    openDialog("Invitado de: " + infoMensaje[1], true);
                     Log.i("APINAVES", "REGISTRO ACTUALIZADO CORRECTAMENTE");
                 }
                 else
                 {
-                    showDialog("La invitación NO es válida");
+                    openDialog("La invitación NO es válida", false);
                     Log.e("APINAVES", "ERROR AL ACTUALIZAR EL CODIGO " + response.message());
                 }
             }
@@ -161,7 +173,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onFailure(Call<CodigoModel> call, Throwable t)
             {
-                showDialog("Fallo al llamar a la API " + t.getMessage());
+                openDialog("Fallo al llamar a la API " + t.getMessage(), false);
             }
         });
     }
