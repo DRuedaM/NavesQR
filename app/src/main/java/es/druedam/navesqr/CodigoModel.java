@@ -2,6 +2,7 @@ package es.druedam.navesqr;
 
 import java.util.Date;
 
+//Clase que contiene el modelo y estructura de la tabla codigo de la base de datos
 public class CodigoModel
 {
     int id_codigo;

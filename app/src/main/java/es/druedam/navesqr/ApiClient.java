@@ -5,9 +5,11 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiClient
 {
-    private static final String URL = "http://192.168.1.13:8080";
+    //Direccion ip de la API
+    private static final String URL = "http://direccion:puerto";
     private static Retrofit retrofit;
 
+    //Metodo que devuelve la comunicacion con la api
     public static Retrofit getClient()
     {
         try

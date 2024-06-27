@@ -35,6 +35,9 @@ public class MainActivity extends AppCompatActivity
     private String[] infoMensaje = null;
     private Dialog dialog;
 
+    //Este metodo es el primero en llamarse cuando se ejecuta la aplicacion
+    //contiene la informacion de la pantalla principal y lo que se va a mostrar
+    //tambien contiene el listener del boton escanear
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -42,28 +45,33 @@ public class MainActivity extends AppCompatActivity
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        //Llamamos a la clase toolbar para modificar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setIcon(R.mipmap.app_icon_foreground);
         getSupportActionBar().setTitle("Naves Escaner QR");
         toolbar.setTitleTextColor(Color.parseColor("#ffffff"));
 
+        //Llamada a la api para futuras consultas
         apiService = ApiClient.getClient().create(ApiService.class);
 
+        //Creamos el listener del boton escanear,
+        //cuando se pulse se ejecutaran las operaciones para la lectura de QR
         binding.button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view)
             {
                 IntentIntegrator integrator = new IntentIntegrator(MainActivity.this);
-                integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
-                integrator.setPrompt("Escanee el QR de la invitación porfavor");
-                integrator.setTorchEnabled(false);
-                integrator.setBeepEnabled(true);
-                integrator.initiateScan();
+                integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE); //Formato del escaner
+                integrator.setPrompt("Escanee el QR de la invitación porfavor"); //Frase al mostrar cuando se ejecute la operacion
+                integrator.setTorchEnabled(false); //No activamos por defecto la linterna para escanear
+                integrator.setBeepEnabled(true); //Hacer sonido al escanear el codigo
+                integrator.initiateScan(); //Iniciar escaneo
             }
         });
     }
 
+    //Metodo que se llama cuando se ha iniciado el escaneo y se devuelve un resultado
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data)
     {
@@ -77,6 +85,7 @@ public class MainActivity extends AppCompatActivity
             }
             else
             {
+                //Se comprueba si el codigo ya ha sido validado llamando a la api
                 Date cDate = new Date();
                 String fDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX").format(cDate);
                 infoMensaje = result.getContents().split("&");
@@ -119,6 +128,7 @@ public class MainActivity extends AppCompatActivity
         dialog.show();
     }
 
+    //Metodo para comprobar si el codigo ya ha sido validado, si no lo esta, se llama al metodo updateCodigo para actualizarlo
     private void getCodigoValidado(String codigo, CodigoModel codigoModel)
     {
         Call<Boolean> callBool = apiService.getValidacionCodigo(codigo);
@@ -150,6 +160,7 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
+    //Metodo que llama a la api para actualizar el codigo en la base de datos
     private void updateCodigo(String codigo, CodigoModel codigoModel)
     {
         Call<CodigoModel> call = apiService.updateCodigo(codigo, codigoModel);
@@ -177,7 +188,4 @@ public class MainActivity extends AppCompatActivity
             }
         });
     }
-
-
-
 }
